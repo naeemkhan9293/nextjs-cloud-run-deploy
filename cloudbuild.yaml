@@ -4,15 +4,49 @@ steps:
     args:
       - "-c"
       - |
-        # Write your entire .env from Secret Manager into .env
+        echo "--- Cloud Build Start ---"
+        echo "Attempting to retrieve secret from Secret Manager..."
+
+        # --- DEBUGGING START ---
+        echo "--- Contents of ENV_FILE variable (from Secret Manager) ---"
+        # Print the content of the ENV_FILE variable.
+        # **IMPORTANT**: Be cautious if your secret contains sensitive data you don't want in logs.
+        # For production, remove this debug line after troubleshooting.
+        if [ -z "$ENV_FILE" ]; then
+          echo "ENV_FILE is empty or not set. This indicates an issue with secret retrieval or permissions."
+        else
+          echo "$ENV_FILE"
+        fi
+        echo "--------------------------------------------------------"
+
+        # --- Write your entire .env from Secret Manager into .env ---
         echo "$ENV_FILE" > .env
 
-        # Build and tag the image, passing NEXT_PUBLIC_… vars as build-args
+        echo "--- Verifying .env file creation ---"
+        # Check if the .env file was created and what its content is.
+        if [ -f ".env" ]; then
+          echo ".env file created successfully. Contents:"
+          cat .env
+        else
+          echo ".env file was NOT created. Check previous steps for errors."
+        fi
+        echo "----------------------------------"
+        # --- DEBUGGING END ---
+
+        # Export variables from .env so they are available as build-args
+        echo "--- Exporting .env variables ---"
+        set -a
+        [ -f .env ] && . .env
+        set +a
+
+        # Build and tag the image, passing NEXT_PUBLIC_MY_ENV_VAR and SERVER_ENV_VAR as build-args
+        echo "--- Building Docker Image ---"
         docker build \
-          --build-arg NEXT_PUBLIC_VAR1="$NEXT_PUBLIC_VAR1" \
-          --build-arg NEXT_PUBLIC_VAR2="$NEXT_PUBLIC_VAR2" \
+          --build-arg NEXT_PUBLIC_MY_ENV_VAR="$NEXT_PUBLIC_MY_ENV_VAR" \
+          --build-arg SERVER_ENV_VAR="$SERVER_ENV_VAR" \
           -t "$IMAGE" \
           .
+        echo "--- Docker Image Build Complete ---"
 
 availableSecrets:
   secretManager:

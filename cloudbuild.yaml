@@ -1,15 +1,17 @@
-substitutions:
-  _NEXT_PUBLIC_MY_ENV_VAR: "your-default-value1213123"
-
 steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "build"
       - "--build-arg"
-      - "NEXT_PUBLIC_MY_ENV_VAR=$_NEXT_PUBLIC_MY_ENV_VAR"
+      - "NEXT_PUBLIC_MY_ENV_VAR=$$NEXT_PUBLIC_MY_ENV_VAR"
       - "-t"
       - "$IMAGE"
       - "."
+
+availableSecrets:
+  secretManager:
+    - versionName: "projects/$PROJECT_ID/secrets/NEXT_PUBLIC_MY_ENV_VAR/versions/latest"
+      env: "NEXT_PUBLIC_MY_ENV_VAR"
 
 images:
   - "$IMAGE"

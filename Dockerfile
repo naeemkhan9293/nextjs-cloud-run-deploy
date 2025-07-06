@@ -16,6 +16,7 @@ FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_MY_ENV_VAR=${NEXT_PUBLIC_MY_ENV_VAR}
 # The standalone output already includes the necessary node_modules, so we don't need to copy them separately.
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/public ./public

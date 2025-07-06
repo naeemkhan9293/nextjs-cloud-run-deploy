@@ -1,13 +1,15 @@
-steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args:
-  - 'build'
-  - '--build-arg'
-  - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
-  - '-t'
-  - 'gcr.io/$PROJECT_ID/test-deploy:latest'
-  - '.'
-images:
-- 'gcr.io/$PROJECT_ID/test-deploy:latest'
 substitutions:
-  _NEXT_PUBLIC_MY_ENV_VAR: 'your-default-value'
+  _NEXT_PUBLIC_MY_ENV_VAR: "your-default-value1213123"
+
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "--build-arg"
+      - "NEXT_PUBLIC_MY_ENV_VAR=$_NEXT_PUBLIC_MY_ENV_VAR"
+      - "-t"
+      - "$IMAGE"
+      - "."
+
+images:
+  - "$IMAGE"

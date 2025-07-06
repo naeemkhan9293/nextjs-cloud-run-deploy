@@ -18,10 +18,6 @@ availableSecrets:
   secretManager:
     - versionName: "projects/565291147090/secrets/test-deploy/versions/latest"
       env: "ENV_FILE"
-    - versionName: "projects/565291147090/secrets/NEXT_PUBLIC_VAR1/versions/latest"
-      env: "NEXT_PUBLIC_MY_ENV_VAR"
-    - versionName: "projects/565291147090/secrets/NEXT_PUBLIC_VAR2/versions/latest"
-      env: "your_server_value_here"
 
 images:
   - "$IMAGE"

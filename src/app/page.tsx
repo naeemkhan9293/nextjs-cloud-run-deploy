@@ -21,7 +21,7 @@ export default function Home() {
           🚀 Deploy, test, and shine!<br />
           Experience a modern, beautiful, and animated homepage.
         </p>
-          {/* {process.env.NEXT_PUBLIC_MY_ENV_VAR} */}
+          {process.env.NEXT_PUBLIC_MY_ENV_VAR}
       </main>
       {/* Footer removed as requested */}
 

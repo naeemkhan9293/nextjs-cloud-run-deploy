@@ -1,17 +1,27 @@
 steps:
   - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
     args:
-      - "build"
-      - "--build-arg"
-      - "NEXT_PUBLIC_MY_ENV_VAR=$$NEXT_PUBLIC_MY_ENV_VAR"
-      - "-t"
-      - "$IMAGE"
-      - "."
+      - "-c"
+      - |
+        # Write your entire .env from Secret Manager into .env
+        echo "$ENV_FILE" > .env
+
+        # Build and tag the image, passing NEXT_PUBLIC_… vars as build-args
+        docker build \
+          --build-arg NEXT_PUBLIC_VAR1="$NEXT_PUBLIC_VAR1" \
+          --build-arg NEXT_PUBLIC_VAR2="$NEXT_PUBLIC_VAR2" \
+          -t "$IMAGE" \
+          .
 
 availableSecrets:
   secretManager:
-    - versionName: "projects/$PROJECT_ID/secrets/NEXT_PUBLIC_MY_ENV_VAR/versions/latest"
+    - versionName: "projects/565291147090/secrets/test-deploy/versions/latest"
+      env: "ENV_FILE"
+    - versionName: "projects/565291147090/secrets/NEXT_PUBLIC_VAR1/versions/latest"
       env: "NEXT_PUBLIC_MY_ENV_VAR"
+    - versionName: "projects/565291147090/secrets/NEXT_PUBLIC_VAR2/versions/latest"
+      env: "your_server_value_here"
 
 images:
   - "$IMAGE"

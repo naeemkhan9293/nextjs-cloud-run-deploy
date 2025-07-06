@@ -22,6 +22,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log("Environmental variable:", process.env.SERVER_ENV_VAR as string);
   return (
     <html lang="en">
       <body

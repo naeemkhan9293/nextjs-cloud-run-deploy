@@ -11,7 +11,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ARG NEXT_PUBLIC_MY_ENV_VAR
-ENV NEXT_PUBLIC_MY_ENV_VAR=${NEXT_PUBLIC_MY_ENV_VAR}
+ENV NEXT_PUBLIC_MY_ENV_VAR="hello world"
 ENV NODE_ENV=production
 
 

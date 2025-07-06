@@ -1,6 +1,7 @@
 "use client"
 
 export default function Home() {
+  console.log(process.env.NEXT_PUBLIC_MY_ENV_VAR)
   return (
     <div
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e] p-0"

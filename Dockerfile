@@ -10,8 +10,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NODE_ENV=production
+ARG NEXT_PUBLIC_MY_ENV_VAR
 ENV NEXT_PUBLIC_MY_ENV_VAR=${NEXT_PUBLIC_MY_ENV_VAR}
+ENV NODE_ENV=production
 
 
 RUN npm run build

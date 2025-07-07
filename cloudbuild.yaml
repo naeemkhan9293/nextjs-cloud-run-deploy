@@ -53,7 +53,7 @@ steps:
       '--min-instances', '${_MIN_INSTANCES}',
       '--max-instances', '${_MAX_INSTANCES}',
       '--timeout', '3600',
-      '--set-build-env-vars-file', '/workspace/build_env.txt'
+      '--build-env-vars-file', '/workspace/build_env.txt'
     ]
 
 # Substitution variables with defaults

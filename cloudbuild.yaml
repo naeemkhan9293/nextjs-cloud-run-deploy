@@ -24,21 +24,23 @@ steps:
         echo "Environment pairs:"
         cat /workspace/env_pairs.txt
 
-        # Convert to build env format (name=value)
-        > /workspace/build_env.txt
+        # Convert to build env format (YAML format for --build-env-vars-file)
+        echo "# Build environment variables" > /workspace/build_env.yaml
         while IFS= read -r line; do
           if [[ -n "$line" ]]; then
             if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
               # This is a variable name, read the next line for value
               var_name="$line"
               read -r var_value
-              echo "${var_name}=${var_value}" >> /workspace/build_env.txt
+              # Escape special characters for YAML and quote the value
+              escaped_value=$(printf '%s\n' "$var_value" | sed 's/"/\\"/g')
+              echo "${var_name}: \"${escaped_value}\"" >> /workspace/build_env.yaml
             fi
           fi
         done < /workspace/env_pairs.txt
 
         echo "Final build environment file:"
-        cat /workspace/build_env.txt
+        cat /workspace/build_env.yaml
 
   # Step 2: Deploy to Cloud Run using source-based deployment with extracted env vars
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -53,7 +55,7 @@ steps:
       '--min-instances', '${_MIN_INSTANCES}',
       '--max-instances', '${_MAX_INSTANCES}',
       '--timeout', '3600',
-      '--build-env-vars-file', '/workspace/build_env.txt'
+      '--build-env-vars-file', '/workspace/build_env.yaml'
     ]
 
 # Substitution variables with defaults

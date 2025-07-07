@@ -8,24 +8,37 @@ steps:
       - |
         echo "Getting environment variables from Cloud Run service..."
 
-        # Get environment variables from the existing service
+        # Get environment variables from the existing service in YAML format
         gcloud run services describe ${_SERVICE_NAME} \
           --region=${_REGION} \
-          --format="export" > /workspace/current_env.sh 2>/dev/null || echo "# No existing service found" > /workspace/current_env.sh
+          --format="get(spec.template.spec.template.spec.containers[0].env)" > /workspace/env_raw.txt 2>/dev/null || echo "[]" > /workspace/env_raw.txt
 
-        # Extract environment variables and create build env file
-        echo "Extracting environment variables..."
-        cat /workspace/current_env.sh | grep -E "^export.*=" | sed 's/^export //' > /workspace/build_env.txt || touch /workspace/build_env.txt
+        echo "Raw environment data:"
+        cat /workspace/env_raw.txt
 
-        # Show what we found
-        echo "Environment variables found:"
+        # Extract environment variables using a more robust method
+        gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --format="value(spec.template.spec.template.spec.containers[0].env[].name,spec.template.spec.template.spec.containers[0].env[].value)" > /workspace/env_pairs.txt 2>/dev/null || touch /workspace/env_pairs.txt
+
+        echo "Environment pairs:"
+        cat /workspace/env_pairs.txt
+
+        # Convert to build env format (name=value)
+        > /workspace/build_env.txt
+        while IFS= read -r line; do
+          if [[ -n "$line" ]]; then
+            if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+              # This is a variable name, read the next line for value
+              var_name="$line"
+              read -r var_value
+              echo "${var_name}=${var_value}" >> /workspace/build_env.txt
+            fi
+          fi
+        done < /workspace/env_pairs.txt
+
+        echo "Final build environment file:"
         cat /workspace/build_env.txt
-
-        # If no env vars found, create empty file
-        if [ ! -s /workspace/build_env.txt ]; then
-          echo "No environment variables found, creating empty file"
-          touch /workspace/build_env.txt
-        fi
 
   # Step 2: Deploy to Cloud Run using source-based deployment with extracted env vars
   - name: 'gcr.io/cloud-builders/gcloud'

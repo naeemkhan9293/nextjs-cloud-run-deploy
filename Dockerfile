@@ -11,8 +11,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build arguments for environment variables
-# ARG NEXT_PUBLIC_MY_ENV_VAR
-# ARG SERVER_ENV_VAR
+ARG NEXT_PUBLIC_MY_ENV_VAR
+ARG SERVER_ENV_VAR
 
 # Set environment variables
 ENV NODE_ENV=production

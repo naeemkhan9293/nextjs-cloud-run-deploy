@@ -28,24 +28,41 @@ steps:
         # Start with an empty YAML map
         echo "{}" > /workspace/build_env.yaml
 
-        # Check if we have any environment variables
-        if [[ -s /workspace/env_pairs.txt ]]; then
+        # Check if we have any meaningful environment variables
+        # Remove empty lines and whitespace-only lines, then check if anything remains
+        grep -v '^[[:space:]]*$' /workspace/env_pairs.txt > /workspace/env_clean.txt 2>/dev/null || touch /workspace/env_clean.txt
+
+        if [[ -s /workspace/env_clean.txt ]]; then
           echo "Found environment variables, converting to YAML..."
-          # Create proper YAML format
-          echo "# Build environment variables" > /workspace/build_env.yaml
+          # Create proper YAML format - start with empty map and add variables
+          echo "{}" > /workspace/build_env.yaml
+
+          # Track if we actually add any variables
+          vars_added=false
 
           while IFS= read -r line; do
-            if [[ -n "$line" ]]; then
+            if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*$ ]]; then
               if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
                 # This is a variable name, read the next line for value
                 var_name="$line"
-                read -r var_value
-                # Escape special characters for YAML and quote the value
-                escaped_value=$(printf '%s\n' "$var_value" | sed 's/"/\\"/g')
-                echo "${var_name}: \"${escaped_value}\"" >> /workspace/build_env.yaml
+                if read -r var_value; then
+                  # If this is the first variable, start with proper YAML structure
+                  if [[ "$vars_added" == "false" ]]; then
+                    echo "# Build environment variables" > /workspace/build_env.yaml
+                    vars_added=true
+                  fi
+                  # Escape special characters for YAML and quote the value
+                  escaped_value=$(printf '%s\n' "$var_value" | sed 's/"/\\"/g')
+                  echo "${var_name}: \"${escaped_value}\"" >> /workspace/build_env.yaml
+                fi
               fi
             fi
-          done < /workspace/env_pairs.txt
+          done < /workspace/env_clean.txt
+
+          # If no variables were actually added, ensure we have valid YAML
+          if [[ "$vars_added" == "false" ]]; then
+            echo "{}" > /workspace/build_env.yaml
+          fi
         else
           echo "No environment variables found, using empty YAML map"
           echo "{}" > /workspace/build_env.yaml
@@ -61,8 +78,11 @@ steps:
       - '-c'
       - |
         # Check if we have environment variables to pass
-        if [[ -s /workspace/build_env.yaml ]] && [[ "$(cat /workspace/build_env.yaml)" != "{}" ]]; then
+        # Look for actual key-value pairs, not just comments or empty maps
+        if [[ -s /workspace/build_env.yaml ]] && grep -q '^[A-Z_][A-Z0-9_]*:' /workspace/build_env.yaml; then
           echo "Deploying with build environment variables..."
+          echo "Environment variables to be used:"
+          cat /workspace/build_env.yaml
           gcloud run deploy ${_SERVICE_NAME} \
             --source . \
             --region ${_REGION} \
@@ -76,6 +96,7 @@ steps:
             --build-env-vars-file /workspace/build_env.yaml
         else
           echo "Deploying without build environment variables..."
+          echo "No environment variables found or file contains only empty map"
           gcloud run deploy ${_SERVICE_NAME} \
             --source . \
             --region ${_REGION} \

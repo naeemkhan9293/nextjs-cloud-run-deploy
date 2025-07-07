@@ -11,13 +11,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build arguments for environment variables
-ARG NEXT_PUBLIC_MY_ENV_VAR
-ARG SERVER_ENV_VAR
+# ARG NEXT_PUBLIC_MY_ENV_VAR
+# ARG SERVER_ENV_VAR
 
-# Set environment variables
+# # Set environment variables
+# ENV NEXT_PUBLIC_MY_ENV_VAR=$NEXT_PUBLIC_MY_ENV_VAR
+# ENV SERVER_ENV_VAR=$SERVER_ENV_VAR
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_MY_ENV_VAR=$NEXT_PUBLIC_MY_ENV_VAR
-ENV SERVER_ENV_VAR=$SERVER_ENV_VAR
 
 
 RUN npm run build

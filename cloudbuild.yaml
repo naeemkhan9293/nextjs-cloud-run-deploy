@@ -1,10 +1,48 @@
 steps:
-- name: 'gcr.io/cloud-builders/npm'
-  args: ['install']
-- name: 'gcr.io/cloud-builders/npm'
-  args: ['run', 'build']
-  env:
-  - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}' 
-  - 'ANOTHER_BUILD_VAR=some_value' 
-images:
-- 'gcr.io/$PROJECT_ID/my-nextjs-app'
+  # Install dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['ci']
+    env:
+      # Build-time environment variables for Next.js
+      - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
+      - 'SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
+
+  # Build the Next.js application
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
+    env:
+      # Build-time environment variables for Next.js
+      - 'NODE_ENV=production'
+      - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
+      - 'SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
+
+  # Deploy to Cloud Run (this step updates the existing service)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'run', 'deploy', '${_SERVICE_NAME}',
+      '--source', '.',
+      '--region', '${_REGION}',
+      '--platform', 'managed',
+      '--port', '8080',
+      '--memory', '${_MEMORY}',
+      '--cpu', '${_CPU}',
+      '--min-instances', '${_MIN_INSTANCES}',
+      '--max-instances', '${_MAX_INSTANCES}',
+      '--update-env-vars', 'NODE_ENV=production,NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR},SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
+    ]
+
+# Substitution variables with defaults
+substitutions:
+  _SERVICE_NAME: 'my-nextjs-app'
+  _REGION: 'us-central1'
+  _MEMORY: '512Mi'
+  _CPU: '1'
+  _MIN_INSTANCES: '0'
+  _MAX_INSTANCES: '10'
+  _NEXT_PUBLIC_MY_ENV_VAR: ''
+  _SERVER_ENV_VAR: ''
+
+
+
+options:
+  logging: CLOUD_LOGGING_ONLY

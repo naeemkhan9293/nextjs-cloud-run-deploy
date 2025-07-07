@@ -1,22 +1,6 @@
 steps:
-  # Install dependencies
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['ci']
-    env:
-      # Build-time environment variables for Next.js
-      - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
-      - 'SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
-
-  # Build the Next.js application
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['run', 'build']
-    env:
-      # Build-time environment variables for Next.js
-      - 'NODE_ENV=production'
-      - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
-      - 'SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
-
-  # Deploy to Cloud Run (this step updates the existing service)
+  # Deploy to Cloud Run using source-based deployment
+  # Cloud Run will handle the build process automatically
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [
       'run', 'deploy', '${_SERVICE_NAME}',
@@ -28,19 +12,28 @@ steps:
       '--cpu', '${_CPU}',
       '--min-instances', '${_MIN_INSTANCES}',
       '--max-instances', '${_MAX_INSTANCES}',
-      '--update-env-vars', 'NODE_ENV=production,NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR},SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
+      '--timeout', '3600',
+      '--set-env-vars', 'NODE_ENV=production',
+      '--update-env-vars', 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR},SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
     ]
+    env:
+      # Build-time environment variables for Next.js build process
+      - 'NODE_ENV=production'
+      - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
+      - 'SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
 
 # Substitution variables with defaults
+# These can be overridden in the Cloud Build trigger settings
 substitutions:
-  _SERVICE_NAME: 'my-nextjs-app'
-  _REGION: 'us-central1'
-  _MEMORY: '512Mi'
+  _SERVICE_NAME: 'nextjs-cloud-run-deploy'
+  _REGION: 'europe-west1'
+  _MEMORY: '1Gi'
   _CPU: '1'
   _MIN_INSTANCES: '0'
   _MAX_INSTANCES: '10'
-  _NEXT_PUBLIC_MY_ENV_VAR: ''
-  _SERVER_ENV_VAR: ''
+
+# Build timeout (important for Next.js builds)
+timeout: '1200s'
 
 
 

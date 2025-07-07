@@ -12,15 +12,8 @@ steps:
       '--cpu', '${_CPU}',
       '--min-instances', '${_MIN_INSTANCES}',
       '--max-instances', '${_MAX_INSTANCES}',
-      '--timeout', '3600',
-      '--set-env-vars', 'NODE_ENV=production',
-      '--update-env-vars', 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR},SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
+      '--timeout', '3600'
     ]
-    env:
-      # Build-time environment variables for Next.js build process
-      - 'NODE_ENV=production'
-      - 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR}'
-      - 'SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
 
 # Substitution variables with defaults
 # These can be overridden in the Cloud Build trigger settings

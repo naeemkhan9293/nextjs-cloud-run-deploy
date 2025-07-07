@@ -1,5 +1,33 @@
 steps:
-  # Deploy to Cloud Run using source-based deployment
+  # Step 1: Get environment variables from existing Cloud Run service
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'get-env-vars'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Getting environment variables from Cloud Run service..."
+
+        # Get environment variables from the existing service
+        gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --format="export" > /workspace/current_env.sh 2>/dev/null || echo "# No existing service found" > /workspace/current_env.sh
+
+        # Extract environment variables and create build env file
+        echo "Extracting environment variables..."
+        cat /workspace/current_env.sh | grep -E "^export.*=" | sed 's/^export //' > /workspace/build_env.txt || touch /workspace/build_env.txt
+
+        # Show what we found
+        echo "Environment variables found:"
+        cat /workspace/build_env.txt
+
+        # If no env vars found, create empty file
+        if [ ! -s /workspace/build_env.txt ]; then
+          echo "No environment variables found, creating empty file"
+          touch /workspace/build_env.txt
+        fi
+
+  # Step 2: Deploy to Cloud Run using source-based deployment with extracted env vars
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [
       'run', 'deploy', '${_SERVICE_NAME}',
@@ -12,7 +40,7 @@ steps:
       '--min-instances', '${_MIN_INSTANCES}',
       '--max-instances', '${_MAX_INSTANCES}',
       '--timeout', '3600',
-      '--set-build-env-vars', 'NEXT_PUBLIC_MY_ENV_VAR=${_NEXT_PUBLIC_MY_ENV_VAR},SERVER_ENV_VAR=${_SERVER_ENV_VAR}'
+      '--set-build-env-vars-file', '/workspace/build_env.txt'
     ]
 
 # Substitution variables with defaults
@@ -24,8 +52,6 @@ substitutions:
   _CPU: '1'
   _MIN_INSTANCES: '0'
   _MAX_INSTANCES: '10'
-  _NEXT_PUBLIC_MY_ENV_VAR: ''
-  _SERVER_ENV_VAR: ''
 
 # Build timeout (important for Next.js builds)
 timeout: '1200s'
